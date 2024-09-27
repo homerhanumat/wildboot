@@ -1,0 +1,180 @@
+---
+title: "Wild Bootstrap Confidence Intervals"
+subtitle: "Response to queries from Sara Incera"
+format:
+  lumo-html: 
+    github-repo: "https://www.github.com/homerhanumat/wildboot"
+    primary-color: "#a31f37"
+    self-contained: true
+    is-particlejs-enabled: true
+author: Homer White
+date: last-modified
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(lmboot)
+library(DT)
+library(knitr)
+```
+
+## Questions
+
+You had these three questions:
+
+1. Do I need to change the `bootDIstn = "normal"` option to something else?
+1. Can I run this bootstrap method if the distribution of the residuals is bimodal?
+1. How can I get the confidence intervals for these five estimates? 
+
+My answers:
+
+1. No.  The options for `bootDIstn` implement various attempts to get slightly more powerful results at small sample sizes in specific situations. They do not correspond to the observed distribution of the residuals. 
+1. Yes.  The bootstrap is designed to handle situations where one cannot make assumptions about the distribution of the residuals.
+1. See the rest of this note.
+
+## A Small Example
+
+From the `mtcars` data table in the **dataset** package:
+
+```{r}
+#| code-fold: false
+mtcars2 <-
+  mtcars %>% 
+  mutate(
+    vs = factor(vs), 
+    am = factor(am)
+  ) %>% 
+  mutate(
+    vs = fct_recode(vs, "V-shaped" = "0", "straight" = "1"),
+    am = fct_recode(am, "automatic" = "0", "manual" = "1")
+  ) %>% 
+  select(mpg, disp, wt, vs, am)
+```
+
+Here's the example table:
+
+
+```{r}
+#| tbl-cap: "Motor Trend cars"
+DT::datatable(
+  mtcars2
+)
+```
+
+
+
+## Regression
+
+Let's predict mileage from the other variables:
+
+```{r}
+#| code-fold: false
+mod <- wild.boot(
+  mpg ~ .,
+  B = 2000,
+  data = mtcars2,
+  seed = 4949, ## for reproducibility,
+  bootDistn = "normal"
+)
+```
+
+
+The bootstrap re-samples are given in a matrix (`mod$bootEstParam`) where the columns are named:
+
+```{r}
+#| tbl-cap: "Bootstrap re-samples"
+resamples <-
+  mod$bootEstParam
+
+DT::datatable(
+  resamples %>% as.data.frame() %>% round(3)
+)
+```
+
+## Point estimates for the Parameters
+
+The point estimate for a parameter is the mean of the re-samples for that parameter.  You have indicated you know how to access them:
+
+```{r}
+#| tbl-cap: "Parameter point-estimates"
+mod$origEstParam %>% 
+  knitr::kable()
+```
+
+
+## Confidence Intervals
+
+You are left to your own devices to construct a confidence interval for a given model parameter, using the re-samples in provided in the column associated with that parameter. That's because there are many ways to make the interval.
+
+One simple option---perfectly acceptable here, I think---is the so-called "percentile" interval.
+
+For example, to make an approximate 95%-confidence interval for your parameter, just take the 2.5th and 97.5th percentiles of your data.
+
+Here's a little function to compute intervals of any desired level of confidence, for any desired parameter, starting from a wild model:
+
+```{r}
+#| code-fold: false
+conf_int <- function(model, parameter, level = 0.95) {
+  resample_matrix <- model$bootEstParam
+  resamples <- resample_matrix[, parameter]
+  bounds <- quantile(resamples, probs = c((1 - level) / 2, (1 + level) / 2))
+  names(bounds) <- c("lower", "upper")
+  bounds
+}
+```
+
+Let's try it out.  Here is a 90%-confidence interval for `ammanual` (the extra miles-per-gallon fuel efficiency of automatic over manual transmission):
+
+```{r}
+#| code-fold: false
+interval <-
+  conf_int(
+    model = mod,
+    parameter = "ammanual",
+    level = 0.90
+  )
+```
+
+So we estimate that the benefit of automatic over manual is about `r round(mod$origEstParam[5,1], 3)` miles per gallon, and we are 90%-percent confident that it is somewhere between `r round(interval[1], 3)` and `r round(interval[2], 3)` miles per gallon.
+
+## Note on Reviewer Comments
+
+The reviewer said:
+
+>Furthermore, the authors should check whether the data is normally distributed. If the data normality assumption has not been met, they should choose to conduct multiple regression analyses using a non-parametric method, such as a bootstrap method (e.g., percentile bootstrap). Given the number of independent and dependent variables in the regression analyses, it is more reliable to use bootstrap confidence intervals instead of p values to determine whether the independent variables significantly predict the dependent variables.
+
+I would note that the bootstrap is often used in hypothessis testing (i.e., there are ways to compute P-values).
+
+Also, the need for the bootstrap comes soley from the failure of the data to meet all of the assumptions of the standard linear model (including normality of residuals):  it does not depend on number of independent or dependent variables.
+
+However, the number of dependent and independent variables does affect the number of research questions you are asking.  As you are probably well-aware from all the recent worries about studies in the social science that don't replicate, it would be bad practice to to look at a lot of intervals and make a big deal about the ones that don't contain 0 (i.e., show "significant" results).  If one is in a situation where nothing relates to anything (say, the data is just random, so that true value of all parameters in the models are 0) and one looks at $N$ 95%-confidence intervals for parameters, then there is a
+
+$$1-0.95^N$$
+
+chance that at least one of the intervals will not contain 0, thereby signalling "publication-worthy evidence" of a relationship between the corresponding independent variable and the dependent variable in the model, even though there is no relationship in reality.  The larger $N$ is, the greater the chance of false positives.
+
+In your study, I'm seeing 5 independent variable and 18 dependent variables, leading to
+
+$$N = 5 \times 18 = 90$$
+
+confidence intervals.  If no all variables are independent of one another, then the chance of at least one "significant" result is:
+
+```{r}
+#| code-fold: false
+1 - 0.95^90
+```
+
+*Using the bootstrap does nothing at all to address this issue.*
+
+::: {.column-margin}
+
+I hope the reviewer did not think that it would.
+
+:::
+
+
+
+
+
+
