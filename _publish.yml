@@ -1,0 +1,4 @@
+- source: wild-bootstrap.qmd
+  quarto-pub:
+    - id: f14fd612-6c5f-4137-9255-3eb72d082548
+      url: 'https://homer.quarto.pub/wild-bootstrap'
