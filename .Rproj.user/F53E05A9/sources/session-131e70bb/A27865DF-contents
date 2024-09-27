@@ -158,14 +158,19 @@ In your study, I'm seeing 5 independent variable and 18 dependent variables, lea
 
 $$N = 5 \times 18 = 90$$
 
-confidence intervals.  If no all variables are independent of one another, then the chance of at least one "significant" result is:
+confidence intervals.  If all variables are actually independent of one another, then the chance of at least one "significant" result indicating dependence is:
 
 ```{r}
 #| code-fold: false
 1 - 0.95^90
 ```
 
-*Using the bootstrap does nothing at all to address this issue.*
+:::{.callout-important}
+* Using the bootstrap does nothing at all to address the above issue.
+* Making confidence intervals instead of performing tests of hypothesis does nothing at all to address the above issue.
+:::
+
+
 
 ::: {.column-margin}
 
