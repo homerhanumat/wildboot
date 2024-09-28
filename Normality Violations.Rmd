@@ -1,0 +1,359 @@
+---
+title: "Who I Am and What I Want to Do: Linking Self-Construals and Career Interests"
+---
+
+
+
+
+
+Gore & Incera (2024)
+
+
+
+
+
+#SETTING UP THE ANALYSES
+
+
+
+Packages
+```{r}
+library(readxl)
+library(performance)
+library(tidyr)
+library(lmboot)
+```
+
+
+
+Import data
+```{r}
+Dataset1 <- read_excel("Data1.xlsx")
+Dataset1$Sex <- as.factor(Dataset1$Sex)
+DatasetClean <- drop_na(Dataset1)
+```
+
+
+
+
+
+
+MODELS
+
+
+
+CreativeArts
+
+
+
+Model (Bimodal)
+```{r}
+m.CreativeArts = lm(CreativeArts ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.CreativeArts.Normality <- check_model(m.CreativeArts,
+                                check = "normality")
+m.CreativeArts.Normality
+```
+
+```{r}
+m.CreativeArts.Boot <- wild.boot(CreativeArts ~ Sex + Independent + Interdependent + Relational + Physical, 
+          B = 1000, data = DatasetClean, seed = NULL, bootDistn = "normal")
+
+m.CreativeArts.Boot$origEstParam
+```
+
+
+
+PerformingArts
+
+
+
+Model (Positively Skewed)
+```{r}
+m.PerformingArts = lm(PerformingArts ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.PerformingArts.Normality <- check_model(m.PerformingArts,
+                                check = "normality")
+m.PerformingArts.Normality
+```
+
+```{r}
+m.PerformingArts.Boot <- wild.boot(CreativeArts ~ Sex + Independent + Interdependent + Relational + Physical, 
+          B = 1000, data = DatasetClean, seed = NULL, bootDistn = "normal")
+
+m.PerformingArts.Boot$origEstParam
+```
+
+
+
+Law
+
+
+
+Model (Bimodal)
+```{r}
+m.Law = lm(Law ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Law.Normality <- check_model(m.Law,
+                                check = "normality")
+m.Law.Normality
+```
+
+
+
+Politics
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Politics = lm(Politics ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Politics.Normality <- check_model(m.Politics,
+                                check = "normality")
+m.Politics.Normality
+```
+
+
+
+TechnicalWriting
+
+
+
+Model (Positively Skewed)
+```{r}
+m.TechnicalWriting = lm(TechnicalWriting ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.TechnicalWriting.Normality <- check_model(m.TechnicalWriting,
+                                check = "normality")
+m.TechnicalWriting.Normality
+```
+
+
+
+InformationTech
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.InformationTech = lm(InformationTech ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.InformationTech.Normality <- check_model(m.InformationTech,
+                                check = "normality")
+m.InformationTech.Normality
+```
+
+
+
+Mathematics
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Mathematics = lm(Mathematics ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Mathematics.Normality <- check_model(m.Mathematics,
+                                check = "normality")
+m.Mathematics.Normality
+```
+
+
+
+OfficeWork
+
+
+
+Model (Bimodal)
+```{r}
+m.OfficeWork = lm(OfficeWork ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.OfficeWork.Normality <- check_model(m.OfficeWork,
+                                check = "normality")
+m.OfficeWork.Normality
+```
+
+
+
+Business
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Business = lm(Business ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Business.Normality <- check_model(m.Business,
+                                check = "normality")
+m.Business.Normality
+```
+
+
+
+Management
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Management = lm(Management ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Management.Normality <- check_model(m.Management,
+                                check = "normality")
+m.Management.Normality
+```
+
+
+
+Finance
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Finance = lm(Finance ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Finance.Normality <- check_model(m.Finance,
+                                check = "normality")
+m.Finance.Normality
+```
+
+
+
+Sales
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.Sales = lm(Sales ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Sales.Normality <- check_model(m.Sales,
+                                check = "normality")
+m.Sales.Normality
+```
+
+
+
+FamilyActivity
+
+
+
+Model  (Negatively Skewed)
+```{r}
+m.FamilyActivity = lm(FamilyActivity ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.FamilyActivity.Normality <- check_model(m.FamilyActivity,
+                                check = "normality")
+m.FamilyActivity.Normality
+```
+
+
+
+SocialServices
+
+
+
+Model  (Negatively Skewed)
+```{r}
+m.SocialServices = lm(SocialServices ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.SocialServices.Normality <- check_model(m.SocialServices,
+                                check = "normality")
+m.SocialServices.Normality
+```
+
+
+
+OutdoorAgriculture
+
+
+
+Model (Positively Skewed)
+```{r}
+m.OutdoorAgriculture = lm(OutdoorAgriculture ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.OutdoorAgriculture.Normality <- check_model(m.OutdoorAgriculture,
+                                check = "normality")
+m.OutdoorAgriculture.Normality
+```
+
+
+
+ManualLabor
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.ManualLabor = lm(ManualLabor ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.ManualLabor.Normality <- check_model(m.ManualLabor,
+                                check = "normality")
+m.ManualLabor.Normality
+```
+
+
+
+Engineering
+
+
+
+Model (Positively Skewed)
+```{r}
+m.Engineering = lm(Engineering ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.Engineering.Normality <- check_model(m.Engineering,
+                                check = "normality")
+m.Engineering.Normality
+```
+
+
+
+ProtectiveServices
+
+
+
+Model  (Positively Skewed)
+```{r}
+m.ProtectiveServices = lm(ProtectiveServices ~ Sex + Independent + Interdependent + Relational + Physical,
+                data = Dataset1)
+
+m.ProtectiveServices.Normality <- check_model(m.ProtectiveServices,
+                                check = "normality")
+m.ProtectiveServices.Normality
+```
+
+
+
+
+
+
+
+
+
+
+If you have questions, suggestions, and/or comments about the analysis, please contact Sara Incera at sara.incera@eku.edu
+
+
+
+
+
