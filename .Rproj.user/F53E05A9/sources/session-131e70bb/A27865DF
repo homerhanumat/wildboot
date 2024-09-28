@@ -3,7 +3,7 @@
     "path": "~/git/wildboot/wild-bootstrap.qmd",
     "project_path": "wild-bootstrap.qmd",
     "type": "quarto_markdown",
-    "hash": "2089929042",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1727476615846.0,
@@ -12,16 +12,16 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "187,72",
-        "scrollLine": "186",
+        "cursorPosition": "211,68",
+        "scrollLine": "207",
         "last_setup_crc32": "131e70bbfbeb69f2"
     },
     "folds": "",
-    "lastKnownWriteTime": 1727482375,
+    "lastKnownWriteTime": 1727482942,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1727482375235,
+    "last_content_update": 1727482942414,
     "read_only": false,
     "read_only_alternatives": []
 }

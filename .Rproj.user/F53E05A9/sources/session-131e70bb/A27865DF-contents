@@ -202,6 +202,12 @@ confidence intervals.  If all variables are actually independent of one another,
 1 - 0.95^90
 ```
 
+That's nearly a 100% chance.  Also, one would expect to observe see about
+
+$$0.05 \times 90 = 4.5$$
+
+of the confidence intervals to fail to contain 0 (thus indicating "statistical significance at the 5%-level") even though there are no relationships anywhere.
+
 :::{.callout-important}
 * Using the bootstrap does nothing at all to address the above issue.
 * Making confidence intervals instead of performing tests of hypothesis does nothing at all to address the above issue.
