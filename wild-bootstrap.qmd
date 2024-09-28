@@ -516,15 +516,3 @@ The prevalence of the bootstrap in computationally-intensive mthods for correcti
 :::
 
 At this point, though, one has to pause and consider whether a decision to look for a more powerful method AFTER seeing the data---and even doing quite a bit of analysis on it---would be an instance of the very data-snooping practices that have contributed to the replication crisis in the social sciences and in other fields where researchers do not have means to directly observe the working of the natural processes that are involved in the generation of data and are therefore largely confined to searching for patterns in the data itself.
-
-
-
-
-
-
-
-
-
-
-
-
