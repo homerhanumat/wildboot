@@ -202,7 +202,7 @@ confidence intervals.  If all variables are actually independent of one another,
 1 - 0.95^90
 ```
 
-That's nearly a 100% chance.  Also, one would expect to observe see about
+That's nearly a 100% chance.  Also, one would expect to observe about
 
 $$0.05 \times 90 = 4.5$$
 
