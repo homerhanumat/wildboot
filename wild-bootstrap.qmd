@@ -501,6 +501,23 @@ knitr::kable(
 ```
 
 
+### Alternative Approaches to Multiple Analyses
+
+I mentioned that the Holm-Bonferroni method is rather "conservative".  It guarantees that when all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$, and in applications this probability liable to be considerably less than $\alpha$, resulting in substantially less power to detect true alternative hypotheses.
+
+Other classical methods, such as those of Hochberg or Hommel, have been demonstrated to be uniformly more powerful than Holm-Bonferroni, but they are applicable only under particular conditions concerning the dependence between variables under study, which conditions are unlikely to hold in your case.
+
+Accordingly, as access to high-speed computation has increased in recent decades, computationaly-intensive methods for correcting P-values in multiple tests have been developed.  Some of these involve the bootstrap and resampling methods, as in [this article](https://www.econ.uzh.ch/dam/jcr:ffffffff-935a-b0d6-ffff-ffffd823d949/jasa.pdf) by Romano and Wolf.
+
+::: {.column-margin}
+
+The prevalence of the bootstrap in computationally-intensive mthods for correcting P-values in multiple tests might have had something to do with the reviewer's suggestion to use the bootstrap, but this is doubtful because the reviewer wanted you to jettison P-values and make confidence intervals instead.  Anyhow, I want to make it clear that the bootstrap regressions performed by the `lmboot::wild_boot()` function do *not* address multiple tests.
+
+:::
+
+At this point, though, one has to pause and consider whether a decision to look for a more powerful method AFTER seeing the data---and even doing quite a bit of analysis on it---would be an instance of the very data-snooping practices that have contributed to the replication crisis in the social sciences and in other fields where researchers do not have means to directly observe the working of the natural processes that are involved in the generation of data and are therefore largely confined to searching for patterns in the data itself.
+
+
 
 
 
