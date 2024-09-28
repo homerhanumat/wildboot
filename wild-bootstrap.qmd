@@ -183,17 +183,75 @@ The reviewer said:
 
 >Furthermore, the authors should check whether the data is normally distributed. If the data normality assumption has not been met, they should choose to conduct multiple regression analyses using a non-parametric method, such as a bootstrap method (e.g., percentile bootstrap). Given the number of independent and dependent variables in the regression analyses, it is more reliable to use bootstrap confidence intervals instead of p values to determine whether the independent variables significantly predict the dependent variables.
 
-I would note that there are ways to compute P-values with the bootstrap, so the bootstrap is often used for hypothesis testing.  Making confidence intervals rather than computing P-values doesn't render one's analysis more "reliable".
+I would note that there are ways to compute P-values with the bootstrap, so the bootstrap is often used for hypothesis testing.  (Making confidence intervals rather than computing P-values doesn't render one's analysis more "reliable".)
 
-Also, the need for the bootstrap derives soley from the failure of the data to meet all of the assumptions of the standard linear model (including normality of residuals):  it does not depend on number of independent or dependent variables.
+In our study, we might be planning four two-sided tests of hypothesis, one for each of the four predictor variables, each having the form:
 
-However, the number of dependent and independent variables *does* affect the number of research questions you are asking.  As you are probably well-aware from all the recent worries about studies in the social science that don't replicate, it would be bad practice to to look at a lot of intervals and make a big deal about the ones that don't contain 0 (i.e., show "significant" results).  If one is in a situation where nothing relates to anything (say, the data is just random, so that true value of all parameters in the models are 0) and one looks at $N$ 95%-confidence intervals for parameters, then there is a
+* $H_0$:  $\theta = 0$ (all the other predictors held equal, this predictor is not associated with the response variable)
+* $H_a$:  $\theta \neq 0$ (it *is* thus associated)
+
+One way to compute a bootstrap confidence interval is by *inversion*, which makes use of these facts about the relationship between confidence-intervals and testing:
+
+* The p-value of the two-sided test for the parameter $\theta$ is the smallest number $\alpha$ such that null value $\theta_0$---the value assigned to $\theta$ by the Null Hypothesis---does not lie in the $1-\alpha$-confidence interval for $\theta$.
+* In two-sided testing of the parameter $\theta$ with significance-level $\alpha$, the set of null values $\theta_0$ that would not be rejected in the test forms a $1-\alpha$-confidence interval for $\theta$.
+
+Here is a function to compute a two-sided bootstrap p-value:
+
+```{r}
+boot_p_val <- function(model, param, theta) {
+  resamples <- model$bootEstParam[, param]
+  n <- length(resamples)
+  sorted <- sort(resamples)
+  if (theta < min(resamples) | theta > max(resamples)) return(0)
+  theta_rank <- min(
+    min(which(theta <= sorted)),
+    n - max(which(theta >= sorted))
+  )
+  theta_perc <- theta_rank / n
+  2 * theta_perc
+}
+```
+
+Let's make a new table that shows the p-values for the predictors.  (We'll leave out the intercept parameter because we are not interested in whether or not it has the value 0.)
+
+
+```{r}
+make_table <- function(mod, level = 0.95) {
+  resamples <- mod$bootEstParam[, -1]
+  parameters <- colnames(resamples)
+  parameters %>% 
+    purrr::map_dfr(function(param) {
+      interval <- conf_int(
+        model = mod,
+        level = level,
+        parameter = param
+      )
+      list(
+        parameter = param,
+        `lower bound` = interval[1],
+        `upper bound` = interval[2],
+        `p-value` = boot_p_val(model = mod, param = param, theta = 0)
+      )
+    })
+}
+
+all_params <- make_table(mod = mod)
+
+knitr::kable(
+  all_params,
+  caption = "Parameter estimates with 95%-confidence intervals and p-values"
+)
+```
+
+We should also be quite clear that the need for the bootstrap derives soley from the failure of the data to meet all of the assumptions of the standard linear model (including normality of residuals).  In particular, the number of independent or dependent variables has no bearing on whether to use the parametric or non-parametric methods of inferential analysis.
+
+On the other hand, the number of dependent and independent variables *can* affect the number of research questions you are asking.  i'm sure you are well-aware of recent concerns in the social sciences about findings that don't replicate, and you know that it would be bad practice to to look at a lot of intervals and make a big deal about the ones that don't contain 0 (i.e., show "significant" results).  If one were in a situation where nothing relates to anything (say, the data is just random, so that true value of all parameters in the models are 0) and were to construct 95%-confidence intervals for $N$ different parameters, then there would be a
 
 $$1-0.95^N$$
 
-chance that at least one of the intervals will not contain 0, thereby signalling "publication-worthy evidence" of a relationship between the corresponding independent variable and the dependent variable in the model, even though there is no relationship in reality.  The larger $N$ is, the greater the chance of false positives.
+chance that at least one of the intervals will not contain 0, corresponding to a P-value of less than 0.05 in a two-sided test of hypothesis and thereby signalling (to a careless analyst) "publication-worthy evidence" of a relationship between the corresponding independent variable and the dependent variable in the model---even though there is in reality *no such relationship*.  The larger $N$ is, the greater the chance of such false positives.
 
-In your study, I'm seeing 5 independent variable and 18 dependent variables, leading to
+In your study, I'm seeing 5 independent variable and 18 dependent variables, resulting in
 
 $$N = 5 \times 18 = 90$$
 
@@ -211,17 +269,91 @@ $$0.05 \times 90 = 4.5$$
 of the confidence intervals to fail to contain 0 (thus indicating "statistical significance at the 5%-level") even though there are no relationships anywhere.
 
 :::{.callout-important}
-* Using the bootstrap does nothing at all to address the above issue.
-* Making confidence intervals instead of performing tests of hypothesis does nothing at all to address the above issue.
+* Using the bootstrap does nothing at all to address the problem of multiple tests.
+* Making confidence intervals instead of performing tests of hypothesis does nothing at all to address the problem of multiple tests.
 :::
+
 
 
 
 ::: {.column-margin}
 
-I hope the reviewer did not think that it would.
+I hope the reviewer did not think that bootstrap confidence intervals would address this problem.  (I have come across bad advice on the web to this effect.)
 
 :::
+
+
+If one does plan to perform multiple analyses, one should adopt a method that controls for the proliferation of false positive results.  A number of control methods are available.  One approach that is rather "conservative" but that applies in all situations of multiple analysis is the [Holm-Bonferroni](https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method) method.  We can implement it here.
+
+```{r}
+#| code-fold: false
+holm_bon <- function(pvals, alpha = 0.05) {
+  df <- 
+    data.frame(
+      id = 1:length(pvals),
+      pval = pvals
+    ) %>% 
+    arrange(pval) %>% 
+    mutate(
+      m = length(pvals):1,
+      holmbon = alpha / m
+    ) %>% 
+    mutate(significant = pval < holmbon) %>% 
+    arrange(id)
+  df
+}
+```
+
+Let's try it on four p-values, with significance-level $\alpha = 0.05$.
+
+```{r}
+holm_bon(c(0.03, 0.01, 0.06, 0.11))
+```
+
+An important property of the Holm-bonferroni criterion for rejection is that if all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$.
+
+Let's incorporate Holm-Bonferroni in our analysis:
+
+```{r}
+make_table <- function(mod, level = 0.95) {
+  resamples <- mod$bootEstParam[, -1]
+  parameters <- colnames(resamples)
+  df <-
+    parameters %>% 
+    purrr::map_dfr(function(param) {
+      interval <- conf_int(
+        model = mod,
+        level = level,
+        parameter = param
+      )
+      list(
+        parameter = param,
+        `lower bound` = interval[1],
+        `upper bound` = interval[2],
+        `p-value` = boot_p_val(model = mod, param = param, theta = 0)
+      )
+    })
+  pvals <- df$`p-value`
+  holmbon_df <- holm_bon(pvals = pvals, alpha = 1 - level)
+  df2 <- 
+    df %>% 
+    mutate(
+      `Holm-Bonferroni Level` = holmbon_df$holmbon,
+      `significant` = holmbon_df$significant
+    )
+  df2
+}
+
+all_params <- make_table(mod = mod)
+
+knitr::kable(
+  all_params,
+  caption = "Parameter estimates with 95%-confidence intervals, uncorrected p-values and Holm-Bonferroni rejection-criteria"
+)
+```
+
+Of course, if you had planned in your study to perform all 90 tests, then you will have to combine the P-values from the 18 models into one vector of length 90 in order to apply the Holm-Bonferooni procedure.  You can't apply Holm-Bonferri separately to each dependent variable study:  that would be like pretending that you are doing only one study instead of 18.
+
 
 
 
