@@ -1,0 +1,38 @@
+---
+title: "Wild Bootstrap Confidence Intervals"
+format:
+  lumo-html: 
+    github-repo: "https://www.github.com/homerhanumat/wildboot"
+    primary-color: "#a31f37"
+    self-contained: true
+    is-particlejs-enabled: true
+author: Homer White
+date: last-modified
+---
+
+
+```{r}
+library(knitr)
+library(DT)
+d <- iris[1:20,]
+```
+
+## kable
+
+@tbl-kable comes here.
+
+```{r}
+#| label: tbl-kable
+#| tbl-cap: "kable"
+kable(d)
+```
+
+## DT::datatable
+
+@datatable comes here.
+
+```{r}
+#| label: datatable
+#| tbl-cap: "have fun"
+datatable(d)
+```

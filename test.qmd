@@ -1,0 +1,73 @@
+---
+title: "Wild Bootstrap Confidence Intervals"
+format:
+  lumo-html: 
+    github-repo: "https://www.github.com/homerhanumat/wildboot"
+    primary-color: "#a31f37"
+    self-contained: true
+    is-particlejs-enabled: true
+author: Homer White
+date: last-modified
+---
+
+
+
+## Questions
+
+You had these three questions:
+
+1. Do I need to change the `bootDIstn = "normal"` option to something else?
+1. Can I run this bootstrap method if the distribution of the residuals is bimodal?
+1. How can I get the confidence intervals for these five estimates? 
+
+My answers:
+
+1. No.  The options for `bootDIstn` implement various attempts to get slightly more powerful results at small sample sizes in specific situations. They do not correspond to the observed distribution of the residuals. 
+1. Yes.  The bootstrap is designed to handle situations where one cannot make assumptions about the distribution of the residuals.
+1. See the rest of this note.
+
+But first let's attach some packages:
+
+```{r setup}
+#| warning: false
+#| message: false
+#| code-fold: false
+library(tidyverse)
+library(lmboot)
+library(DT)
+library(knitr)
+library(readxl)
+```
+
+## A Small Example
+
+From the `mtcars` data table in the **dataset** package:
+
+```{r}
+#| code-fold: false
+mtcars2 <-
+  mtcars %>% 
+  mutate(
+    vs = factor(vs), 
+    am = factor(am)
+  ) %>% 
+  mutate(
+    vs = fct_recode(vs, "V-shaped" = "0", "straight" = "1"),
+    am = fct_recode(am, "automatic" = "0", "manual" = "1")
+  ) %>% 
+  select(mpg, disp, wt, vs, am)
+```
+
+Here's the example table:
+
+
+```{r}
+#| label: motor-trend
+#| tbl-cap: "Motor Trend cars"
+DT::datatable(
+  mtcars2
+)
+```
+
+
+

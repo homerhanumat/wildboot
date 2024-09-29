@@ -59,10 +59,11 @@ mtcars2 <-
   select(mpg, disp, wt, vs, am)
 ```
 
-Here's the example table:
+The data are shown in @tbl-motor-trend below:
 
 
 ```{r}
+#| label: tbl-motor-trend
 #| tbl-cap: "Motor Trend cars"
 DT::datatable(
   mtcars2
@@ -87,9 +88,10 @@ mod <- wild.boot(
 ```
 
 
-The bootstrap re-samples are given in a matrix (`mod$bootEstParam`) where the columns are named:
+The bootstrap re-samples are given in a matrix (`mod$bootEstParam`) rows and columns are named, as represented in @tbl-bootsrap-resamples below:
 
 ```{r}
+#| label: tbl-bootsrap-resamples
 #| tbl-cap: "Bootstrap re-samples"
 resamples <-
   mod$bootEstParam
@@ -104,6 +106,7 @@ DT::datatable(
 The point estimate for a parameter is the mean of the re-samples for that parameter.  You have indicated you know how to access them:
 
 ```{r}
+#| label: tbl-param-point-estimates
 #| tbl-cap: "Parameter point-estimates"
 mod$origEstParam %>% 
   knitr::kable()
@@ -150,6 +153,8 @@ So we estimate that the benefit of automatic over manual is about `r round(mod$o
 You might want to put all of your confidence intervals in one place.  Here's one approach:
 
 ```{r}
+#| label: tbl-all-confints
+#| tbl-cap: "95%-confidence intervals for parameters of the linear model"
 #| code-fold: false
 make_intervals <- function(mod, level = 0.95) {
   resamples <- mod$bootEstParam
@@ -171,10 +176,7 @@ make_intervals <- function(mod, level = 0.95) {
 
 all_intervals <- make_intervals(mod = mod)
 
-knitr::kable(
-  all_intervals,
-  caption = "95%-confidence intervals for parameters of the linear model"
-)
+knitr::kable(all_intervals)
 ```
 
 
@@ -219,6 +221,8 @@ Let's make a new table that shows the p-values for the predictors.  (We'll leave
 
 
 ```{r}
+#| label: tbl-p-vals
+#| tbl-cap: "Parameter estimates with 95%-confidence intervals and p-values"
 make_table <- function(mod, level = 0.95) {
   resamples <- mod$bootEstParam[, -1]
   parameters <- colnames(resamples)
@@ -240,10 +244,7 @@ make_table <- function(mod, level = 0.95) {
 
 all_params <- make_table(mod = mod)
 
-knitr::kable(
-  all_params,
-  caption = "Parameter estimates with 95%-confidence intervals and p-values"
-)
+knitr::kable(all_params)
 ```
 
 ### What's the True Rationale for Using the Bootstrap?
@@ -330,12 +331,12 @@ holm_bon <- function(pvals, alpha = 0.05) {
 Let's try it on four p-values, with significance-level $\alpha = 0.05$.
 
 ```{r}
+#| label: tbl-holm-bon-hypo
+#| tbl-cap: "Holm-Bonferroni applied to a few hypothetical p-values (alpha = 0.05)"
 holm_bon(c(0.02, 0.01, 0.021, 0.11)) %>% 
   rename(`N - m + 1` = divisor) %>% 
   select(-id) %>% 
-  knitr::kable(
-    caption = "Holm-Bonferroni applied to a few hypothetical p-values (alpha = 0.05)"
-  )
+  knitr::kable()
 ```
 
 (**Note**:  In the above table, `holmbon` gives the value of $\alpha / (N-m+1)$ to which $p_m$ would be compared in the Holm-Bonferroni process.  We see that the p-value 0.021 is less than the `holmbon` value, but it is not counted as significant because the Holm-bonferroni process stopped at the smaller p-value 0.02.)
@@ -345,6 +346,8 @@ An important property of the Holm-Bonferroni criterion for rejection is that if 
 Let's incorporate Holm-Bonferroni in our analysis:
 
 ```{r}
+#| label: tbl-holm-bon-example-data
+#| tbl-cap: "Parameter estimates with 95%-confidence intervals, uncorrected p-values and Holm-Bonferroni rejection-criteria"
 make_table <- function(mod, level = 0.95) {
   resamples <- mod$bootEstParam[, -1]
   parameters <- colnames(resamples)
@@ -376,10 +379,7 @@ make_table <- function(mod, level = 0.95) {
 
 all_params <- make_table(mod = mod)
 
-knitr::kable(
-  all_params,
-  caption = "Parameter estimates with 95%-confidence intervals, uncorrected p-values and Holm-Bonferroni rejection-criteria"
-)
+knitr::kable(all_params)
 ```
 
 (**Note**:  In the table above, `Holm-Bonferroni Level` gives the value of $\alpha / (N-m+1)$.)
@@ -507,7 +507,8 @@ Here are the results:
 ::: {.column-page-inset-right}
 
 ```{r}
-
+#| label: tbl-all-tests
+#| tbl-cap: "All tests, with confidence intervals, p-values, and Holm-Bonferroni assessment (alpha = 0.05)"
 DT::datatable(
   all_tabs_complete %>% 
     mutate(
@@ -521,13 +522,14 @@ DT::datatable(
 For convenient reference, below are the analyses that were deemed statistically significant at the $\alpha = 0.05$ level:
 
 ```{r}
+#| label: tbl-all-tests-sig
+#| tbl-cap: "All significant tests, with confidence intervals, p-values, and Holm-Bonferroni assessment (alpha = 0.05)"
 knitr::kable(
   all_tabs_complete %>% 
     filter(significant) %>% 
     select(
       dep, parameter, `p-value`, `Holm-Bonferroni Level`
-    ),
-  caption = "Significant predictors (alpha = 0.05 level)"
+    )
 )
 ```
 
