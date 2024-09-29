@@ -330,6 +330,8 @@ holm_bon <- function(pvals, alpha = 0.05) {
 
 Let's try it on four p-values, with significance-level $\alpha = 0.05$.
 
+
+
 ```{r}
 #| label: tbl-holm-bon-hypo
 #| tbl-cap: "Holm-Bonferroni applied to a few hypothetical p-values (alpha = 0.05)"
@@ -449,9 +451,9 @@ make_one_table <- function(mod, dep, level = 0.95) {
       list(
         dep = dep,
         parameter = param,
-        `lower bound` = interval[1],
-        `upper bound` = interval[2],
-        `p-value` = boot_p_val(model = mod, param = param, theta = 0)
+        lwr_bnd = interval[1],
+        upr_bnd = interval[2],
+        p_val = boot_p_val(model = mod, param = param, theta = 0)
       )
     })
   df
@@ -477,12 +479,6 @@ one_dependent <- function(dep, preds, data, level = 0.95) {
   )
   make_one_table(mod = mod, dep = dep, level = level)
 }
-
-tab <- one_dependent(
-  dep = "Mathematics", 
-  preds = predictors, 
-  data = DatasetClean
-)
 ```
 
 Now let's do all the studies, compuing confidence intervals and P-values, and implementing Holm-Bonferroni:
@@ -493,12 +489,12 @@ all_tabs <-
   dependents %>% 
   map_dfr(one_dependent, preds = predictors, data = DatasetClean)
 
-holm <- holm_bon(all_tabs$`p-value`)
+holm <- holm_bon(all_tabs$p_val)
 all_tabs_complete <-
   all_tabs %>% 
   mutate(
-      `Holm-Bonferroni Level` = holm$holmbon,
-      `significant` = holm$significant
+      holmbon = holm$holmbon,
+      significant = holm$significant
     )
 ```
 
@@ -511,9 +507,7 @@ Here are the results:
 #| tbl-cap: "All tests, with confidence intervals, p-values, and Holm-Bonferroni assessment (alpha = 0.05)"
 DT::datatable(
   all_tabs_complete %>% 
-    mutate(
-      mutate(across(where(is.numeric), function(x) round(x, 5)))
-    )
+    mutate(across(where(is.numeric), function(x) round(x, 5)))
 )
 ```
 
@@ -527,11 +521,86 @@ For convenient reference, below are the analyses that were deemed statistically 
 knitr::kable(
   all_tabs_complete %>% 
     filter(significant) %>% 
-    select(
-      dep, parameter, `p-value`, `Holm-Bonferroni Level`
-    )
+    mutate(across(where(is.numeric), function(x) round(x, 5)))
 )
 ```
+
+### A Note on Adjusting P-values
+
+R provices the function `p.adjust()` that offers to adjust P-values in accordance with several different approaches to multiple testing.  Here is an example of adjustments inspired by Holm-Bonferroni:
+
+```{r}
+#| code-fold: false
+pvals <- c(0.02, 0.01, 0.021, 0.11)
+p_holm <- p.adjust(pvals, method = "holm")
+p_holm
+```
+
+Perhaps the clearest way to explain how the function arrives at the adjusted values is to reproduce it in R-code:
+
+```{r}
+#| code-fold: false
+p_adjust_holm <- function(pvals) {
+  ## find how many p-values there are:
+  N <- length(pvals)
+  ## find the order in which the values come:
+  p_order <- order(pvals)
+  ## sort the values:
+  p_sorted <- sort(pvals)
+  ## set up a "Results vector" to hold adjusted p-values
+  p_adjusted <- numeric(N)
+  ## now address the sorted p-values one by one:
+  for (i in 1:N) {
+    if (i == 1) {
+      adjusted <- p_sorted[i] * (N - i + 1)
+    } else {
+      adjusted <- 
+        max(
+          p_sorted[i] * (N - i + 1),
+          p[i - 1] ## assures that the adjusted values never decrease
+        )
+    }
+    ## No P-value should exceed 1:
+    if (adjusted > 1) adjusted <- 1
+    ## fill in the results vector:
+    p_adjusted[i] <- adjusted
+  }
+  ## permute the adjusted values so that their order corresponds to
+  ## the order of the original p-values:
+  p_adjusted[p_order]
+}
+```
+
+Those adjusted values that do not exceed the target level of significance are the ones declared "significant":
+
+```{r}
+#| code-fold: false
+#| label: tbl-p-adjust-example
+#| tbl-cap: "Holm-Bonferroni adjusted p-values"
+data.frame(
+  p = pvals,
+  p_adj = p.adjust(pvals, method = "holm")
+) %>% 
+  mutate(sig = p_adj <= 0.05) %>% 
+  knitr::kable()
+```
+
+Readers might prefer to see the adjusted p-values:
+
+```{r}
+#| label: tbl-adjusted-study
+#| tbl-cap: "Results showing unadjusted and Hom-Bonferroni-adjusted p-values"
+DT::datatable(
+  all_tabs %>% 
+    mutate(p_adj = p.adjust(p_val, method = "holm")) %>% 
+    mutate(across(where(is.numeric), function(x) round(x, 5))) %>% 
+    select(dep, parameter, lwr_bnd, upr_bnd, p_val, p_adj)
+)
+```
+
+
+
+
 
 
 ### Alternative Approaches to Multiple Analyses
