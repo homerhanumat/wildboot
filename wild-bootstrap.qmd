@@ -79,7 +79,7 @@ Let's predict mileage from the other variables:
 #| code-fold: false
 mod <- wild.boot(
   mpg ~ .,
-  B = 2000,
+  B = 4999,
   data = mtcars2,
   seed = 4949, ## for reproducibility,
   bootDistn = "normal"
@@ -205,12 +205,12 @@ boot_p_val <- function(model, param, theta) {
   resamples <- model$bootEstParam[, param]
   n <- length(resamples)
   sorted <- sort(resamples)
-  if (theta < min(resamples) | theta > max(resamples)) return(0)
+  if (theta < min(resamples) | theta > max(resamples)) return(1 / (n + 1))
   theta_rank <- min(
     min(which(theta <= sorted)),
     n - max(which(theta >= sorted))
   )
-  theta_perc <- theta_rank / n
+  theta_perc <- theta_rank / (n + 1)
   2 * theta_perc
 }
 ```
@@ -316,7 +316,10 @@ holm_bon <- function(pvals, alpha = 0.05) {
 Let's try it on four p-values, with significance-level $\alpha = 0.05$.
 
 ```{r}
-holm_bon(c(0.03, 0.01, 0.06, 0.11))
+holm_bon(c(0.03, 0.01, 0.06, 0.11)) %>% 
+  knitr::kable(
+    caption = "Holm-Bonferroni applied to a few hypothetical p-values"
+  )
 ```
 
 An important property of the Holm-bonferroni criterion for rejection is that if all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$.
@@ -449,7 +452,8 @@ one_dependent <- function(dep, preds, data, level = 0.95) {
   mod <- wild.boot(
     formula = formula,
     data = data,
-    bootDistn = "normal"
+    bootDistn = "normal",
+    B = 4999
   )
   make_one_table(mod = mod, dep = dep, level = level)
 }
@@ -480,12 +484,19 @@ all_tabs_complete <-
 
 Here are the results:
 
+::: {.column-page-inset-right}
 
 ```{r}
+
 DT::datatable(
-  all_tabs_complete
+  all_tabs_complete %>% 
+    mutate(
+      mutate(across(where(is.numeric), function(x) round(x, 5)))
+    )
 )
 ```
+
+:::
 
 For convenient reference, below are the analyses that were deemed statistically significant at the $\alpha = 0.05$ level:
 
