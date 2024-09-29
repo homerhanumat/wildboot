@@ -338,7 +338,7 @@ holm_bon(c(0.02, 0.01, 0.021, 0.11)) %>%
   )
 ```
 
-(**Note**:  In the above table, `holmbon` gives the value of $\alpha / (N-m+1)$ to which $p_m$ would be compared in the Holm-Bonferroni process.  We see that for the p-value 0.021 is less than the `holmbon` value, but it is not counted as significant because the Holm-bonferroni process stopped at the smaller p-value 0.02.)
+(**Note**:  In the above table, `holmbon` gives the value of $\alpha / (N-m+1)$ to which $p_m$ would be compared in the Holm-Bonferroni process.  We see that the p-value 0.021 is less than the `holmbon` value, but it is not counted as significant because the Holm-bonferroni process stopped at the smaller p-value 0.02.)
 
 An important property of the Holm-Bonferroni criterion for rejection is that if all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$.
 
