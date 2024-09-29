@@ -292,7 +292,17 @@ I hope the reviewer did not think that bootstrap confidence intervals would addr
 
 ### Correcting for Multiple Analyses
 
-If one does plan to perform multiple analyses, one should adopt a method that controls for the proliferation of false-positive results.  A number of control methods are available.  One approach that is rather "conservative" but that applies in all situations of multiple analysis is the [Holm-Bonferroni](https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method) method.  We can implement it here.
+If one does plan to perform multiple analyses, one should adopt a method that controls for the proliferation of false-positive results.  A number of control methods are available.  One approach that is rather "conservative" but that applies in all situations of multiple analysis is the [Holm-Bonferroni](https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method) method, which works as follows:
+
+1. Let $\alpha$ be the nominal desired level of significance (commonly $\alpha = 0.05$).
+2. Given $N$ P-values, arrange them in order from the lowest to highest as:  $p_1, p_2, \ldots, p_N$.
+3. Set the variable $m$ to 1.
+4. Check whether $p_{m} \leq \alpha/(N-m+1)$.  If this is not the case, then stop.  If it does happen, then proceed to the next step.
+5. Increase $m$ by 1, and return to Step 4 above.
+
+When the above process stops, the values $p_1, \ldots, p_{m}$ are declared significant.  (Note that there may be integers $n > m$ where $p_n \leq \alpha / (N-n+1)$, but the corresponding P-values won't be declared significant.)
+
+We implement Holm-Bonferroni here:
 
 ```{r}
 #| code-fold: false
@@ -300,15 +310,19 @@ holm_bon <- function(pvals, alpha = 0.05) {
   df <- 
     data.frame(
       id = 1:length(pvals),
-      pval = pvals
+      pval = pvals,
+      m = order(pvals)
     ) %>% 
     arrange(pval) %>% 
     mutate(
-      m = length(pvals):1,
-      holmbon = alpha / m
+      divisor = length(pvals):1,
+      holmbon = alpha / divisor
     ) %>% 
-    mutate(significant = pval < holmbon) %>% 
-    arrange(id)
+    mutate(pass = pval <= holmbon) %>% 
+    mutate(c = cumsum(pass)) %>% 
+    mutate(significant = c >= 1:length(pvals)) %>% 
+    arrange(id) %>% 
+    select(-pass)
   df
 }
 ```
@@ -316,13 +330,17 @@ holm_bon <- function(pvals, alpha = 0.05) {
 Let's try it on four p-values, with significance-level $\alpha = 0.05$.
 
 ```{r}
-holm_bon(c(0.03, 0.01, 0.06, 0.11)) %>% 
+holm_bon(c(0.02, 0.01, 0.021, 0.11)) %>% 
+  rename(`N - m + 1` = divisor) %>% 
+  select(-id) %>% 
   knitr::kable(
-    caption = "Holm-Bonferroni applied to a few hypothetical p-values"
+    caption = "Holm-Bonferroni applied to a few hypothetical p-values (alpha = 0.05)"
   )
 ```
 
-An important property of the Holm-bonferroni criterion for rejection is that if all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$.
+(**Note**:  In the above table, `holmbon` gives the value of $\alpha / (N-m+1)$ to which $p_m$ would be compared in the Holm-Bonferroni process.  We see that for the p-value 0.021 is less than the `holmbon` value, but it is not counted as significant because the Holm-bonferroni process stopped at the smaller p-value 0.02.)
+
+An important property of the Holm-Bonferroni criterion for rejection is that if all of the null-hypotheses are actually true, then the probability of falsely rejecting at least one of them is no more than $\alpha$.
 
 Let's incorporate Holm-Bonferroni in our analysis:
 
@@ -363,6 +381,8 @@ knitr::kable(
   caption = "Parameter estimates with 95%-confidence intervals, uncorrected p-values and Holm-Bonferroni rejection-criteria"
 )
 ```
+
+(**Note**:  In the table above, `Holm-Bonferroni Level` gives the value of $\alpha / (N-m+1)$.)
 
 Of course, if you had planned in your study to perform all 90 tests, then you will have to combine the P-values from the 18 models into one vector of length 90 in order to apply the Holm-Bonferooni procedure.  You can't apply Holm-Bonferri separately to each dependent variable study:  that would be like pretending that you are doing only one study instead of 18.
 
